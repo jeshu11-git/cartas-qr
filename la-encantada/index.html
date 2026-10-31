@@ -4,6 +4,128 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Carta - Huarique Piurano La Encantada</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --crema: #faf6ee;
+      --verde: #7a8b1f;
+      --rojo: #b5442b;
+      --texto: #2b2b2b;
+      --gris: #6b6b6b;
+      --linea: #e2dccb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: var(--crema);
+      color: var(--texto);
+      line-height: 1.5;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Cabecera */
+    header {
+      background: var(--rojo);
+      color: #fff;
+      text-align: center;
+      padding: 32px 16px 24px;
+    }
+    header h1 {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2.6rem;
+      line-height: 1.1;
+    }
+    header p {
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      font-size: .85rem;
+      margin-top: 6px;
+      opacity: .9;
+    }
+
+    /* Secciones como tarjetas */
+    main { padding: 8px 16px 24px; }
+    section {
+      background: #fff;
+      border-radius: 14px;
+      padding: 18px 16px;
+      margin-top: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.06);
+    }
+    h2 {
+      font-family: 'Dancing Script', cursive;
+      color: var(--verde);
+      font-size: 2rem;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 2px solid #eee8d8;
+    }
+
+    /* Cada plato: nombre a la izquierda, precio a la derecha */
+    .plato {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 12px 0;
+      border-bottom: 1px dashed var(--linea);
+    }
+    .plato span:first-child { flex: 1; }
+    .plato span:last-child {
+      font-weight: 700;
+      color: var(--rojo);
+      white-space: nowrap;
+    }
+    section > .plato:last-child,
+    section > .combo:last-child { border-bottom: none; }
+
+    /* Combos, tríos y rondas */
+    .combo {
+      padding-bottom: 10px;
+      border-bottom: 1px dashed var(--linea);
+    }
+    .combo .plato {
+      border-bottom: none;
+      padding-bottom: 4px;
+      font-weight: 600;
+    }
+    .incluye {
+      list-style: none;
+      padding-left: 12px;
+      color: var(--gris);
+      font-size: .92rem;
+    }
+    .incluye li::before {
+      content: "• ";
+      color: var(--verde);
+    }
+
+    /* Pie */
+    footer {
+      background: var(--rojo);
+      color: #fff;
+      text-align: center;
+      padding: 24px 16px 32px;
+      margin-top: 24px;
+    }
+    footer h2 {
+      color: #fff;
+      border: none;
+      font-size: 1.8rem;
+    }
+    footer a {
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.15rem;
+      text-decoration: none;
+      display: inline-block;
+      padding: 8px 4px;
+    }
+  </style>
+  
 </head>
 <body>
 
