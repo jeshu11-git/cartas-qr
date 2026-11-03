@@ -35,6 +35,7 @@
     var h = '';
     if (p.etiqueta) h += ' <span class="badge">' + esc(p.etiqueta) + '</span>';
     if (p.nuevo) h += ' <span class="badge nuevo">Nuevo</span>';
+    if (p.agotado && !(C.pedidos && C.pedidos.activo)) h += ' <span class="badge gris">Agotado</span>';
     return h;
   }
 
@@ -70,6 +71,19 @@
 
   // ---------- armar HTML ----------
   var cats = C.categorias || [];
+  var PED = C.pedidos && C.pedidos.activo ? C.pedidos : null;
+  var ITEMS = {};
+  cats.forEach(function (c) {
+    (c.platos || []).forEach(function (p, i) {
+      p._k = c.id + '-' + i;
+      ITEMS[p._k] = { nombre: (p.dia ? NOMBRE_DIA[p.dia] + ' · ' : '') + p.nombre, precio: Number(p.precio), opciones: p.opciones || null };
+    });
+  });
+  function ctrl(p) {
+    if (!PED) return '';
+    if (p.agotado) return '<span class="agotado-txt">Agotado</span>';
+    return '<span class="ctrl" data-k="' + esc(p._k) + '"></span>';
+  }
   var h = '';
 
   // Portada
@@ -108,7 +122,7 @@
              '<div class="foto">' + foto(p.foto, p.nombre) + (p.etiqueta ? '<span class="badge">' + esc(p.etiqueta) + '</span>' : '') + '</div>' +
              '<div class="cuerpo"><div class="nombre">' + esc(p.nombre) + '</div>' +
              (p.desc ? '<div class="desc">' + esc(p.desc) + '</div>' : '') +
-             '<span class="precio">' + precio(p.precio) + '</span></div></article>';
+             '<div class="fila"><span class="precio">' + precio(p.precio) + '</span>' + ctrl(p) + '</div></div></article>';
       });
     });
     h += '</div></section>';
@@ -122,20 +136,20 @@
     (c.platos || []).forEach(function (p) {
       var busca = esc(normal(p.nombre + ' ' + (p.desc || '') + ' ' + (p.incluye || []).join(' ')));
       if (c.tipo === 'combo') {
-        h += '<div class="combo" data-buscar="' + busca + '"><div class="cabecera">' +
-             '<span class="nombre">' + esc(p.nombre) + badges(p) + '</span><span class="precio">' + precio(p.precio) + '</span></div>';
+        h += '<div class="combo' + (p.agotado ? ' agotado' : '') + '" data-buscar="' + busca + '"><div class="cabecera">' +
+             '<span class="nombre">' + esc(p.nombre) + badges(p) + '</span><div class="lado"><span class="precio">' + precio(p.precio) + '</span>' + ctrl(p) + '</div></div>';
         if (p.foto) h += '<div class="foto-combo">' + foto(p.foto, p.nombre) + '</div>';
         if (p.incluye) h += '<ul class="incluye">' + p.incluye.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul>';
         h += '</div>';
       } else {
         var esHoy = p.dia && p.dia === hoyClave;
         var nombre = (p.dia ? NOMBRE_DIA[p.dia] + ' · ' : '') + p.nombre;
-        h += '<div class="plato' + (esHoy ? ' hoy' : '') + '" data-buscar="' + busca + '">';
+        h += '<div class="plato' + (esHoy ? ' hoy' : '') + (p.agotado ? ' agotado' : '') + '" data-buscar="' + busca + '">';
         if (p.foto) h += '<div class="miniatura">' + foto(p.foto, p.nombre) + '</div>';
         h += '<div class="info"><div class="nombre">' + esc(nombre) + badges(p) + (esHoy ? ' <span class="badge hoy">Hoy</span>' : '') + '</div>';
         if (p.desc) h += '<div class="desc">' + esc(p.desc) + '</div>';
         if (p.opciones) h += '<div class="opciones">' + p.opciones.map(function (o) { return '<span>' + esc(o) + '</span>'; }).join('') + '</div>';
-        h += '</div><span class="precio">' + precio(p.precio) + '</span></div>';
+        h += '</div><div class="lado"><span class="precio">' + precio(p.precio) + '</span>' + ctrl(p) + '</div></div>';
       }
     });
     h += '</div></section>';
@@ -175,6 +189,26 @@
          esc(K.textoBoton || 'Reservar') + '</a>';
   }
   h += '<button class="arriba" type="button" aria-label="Volver arriba">↑</button>';
+  if (PED) {
+    h += '<button class="barra-pedido" type="button" id="verPedido"><span class="bp-cant" id="bpCant"></span>' +
+         '<span>Ver mi pedido</span><span class="bp-total" id="bpTotal"></span></button>';
+    h += '<div class="capa" id="capa"></div>';
+    h += '<div class="hoja" id="hojaOpcion" role="dialog" aria-modal="true"><div class="hoja-asa"></div>' +
+         '<h3 id="opTitulo"></h3><p class="nota">Elige una opción</p><div class="op-botones" id="opBotones"></div></div>';
+    h += '<div class="hoja" id="hojaPedido" role="dialog" aria-modal="true"><div class="hoja-asa"></div>' +
+         '<div class="hoja-cab"><h3>Tu pedido</h3><button class="cerrar" type="button" data-cerrar>✕</button></div>' +
+         '<div id="lineas"></div>' +
+         '<div class="total-fila"><span>Total</span><b id="totalPedido"></b></div>' +
+         '<label class="campo">Tu nombre<input id="pNombre" type="text" autocomplete="name" placeholder="Ej. María"></label>' +
+         '<div class="campo">¿Cómo lo recibes?<div class="modos" id="modos">' +
+         (PED.modos || ['Recojo en el local']).map(function (m, i) {
+           return '<label><input type="radio" name="modo" value="' + esc(m) + '"' + (i === 0 ? ' checked' : '') + '><span>' + esc(m) + '</span></label>';
+         }).join('') + '</div></div>' +
+         (PED.aviso ? '<p class="aviso">' + esc(PED.aviso) + '</p>' : '') +
+         '<label class="campo">Nota (opcional)<textarea id="pNota" rows="2" placeholder="Ej. sin cebolla, paso a las 2 pm"></textarea></label>' +
+         '<button class="enviar" type="button" id="enviar">Enviar pedido por WhatsApp</button>' +
+         '<button class="vaciar" type="button" id="vaciar">Vaciar pedido</button></div>';
+  }
 
   document.getElementById('app').innerHTML = h;
 
@@ -224,4 +258,106 @@
   var arriba = document.querySelector('.arriba');
   window.addEventListener('scroll', function () { arriba.classList.toggle('ver', window.scrollY > 700); }, { passive: true });
   arriba.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  // 4) Pedido por WhatsApp
+  if (PED) (function () {
+    var CLAVE = 'pedido-' + location.pathname;
+    var lineas = [];
+    try { lineas = JSON.parse(localStorage.getItem(CLAVE) || '[]').filter(function (l) { return ITEMS[l.k]; }); } catch (e) { lineas = []; }
+    function guardar() { try { localStorage.setItem(CLAVE, JSON.stringify(lineas)); } catch (e) {} }
+    function cuenta(k) { return lineas.reduce(function (s, l) { return s + (l.k === k ? l.n : 0); }, 0); }
+    function total() { return lineas.reduce(function (s, l) { return s + ITEMS[l.k].precio * l.n; }, 0); }
+    function unidades() { return lineas.reduce(function (s, l) { return s + l.n; }, 0); }
+    function sumar(k, op, d) {
+      var l = lineas.filter(function (x) { return x.k === k && x.op === op; })[0];
+      if (!l) { if (d < 0) return; l = { k: k, op: op || '', n: 0 }; lineas.push(l); }
+      l.n += d;
+      lineas = lineas.filter(function (x) { return x.n > 0; });
+      guardar(); pintar();
+    }
+    var capa = document.getElementById('capa');
+    var hojaOp = document.getElementById('hojaOpcion');
+    var hojaPed = document.getElementById('hojaPedido');
+    var barraPed = document.getElementById('verPedido');
+    var reservar = document.querySelector('.flotante');
+    function abrir(hoja) { capa.classList.add('ver'); hoja.classList.add('ver'); document.body.classList.add('sin-scroll'); }
+    function cerrar() { capa.classList.remove('ver'); hojaOp.classList.remove('ver'); hojaPed.classList.remove('ver'); document.body.classList.remove('sin-scroll'); }
+    capa.addEventListener('click', cerrar);
+    document.querySelectorAll('[data-cerrar]').forEach(function (b) { b.addEventListener('click', cerrar); });
+
+    function pintar() {
+      document.querySelectorAll('.ctrl').forEach(function (el) {
+        var n = cuenta(el.dataset.k);
+        el.innerHTML = n
+          ? '<button type="button" data-acc="menos" aria-label="Quitar">−</button><b>' + n + '</b><button type="button" data-acc="mas" aria-label="Agregar">+</button>'
+          : '<button type="button" class="solo" data-acc="mas" aria-label="Agregar">+</button>';
+        el.classList.toggle('con', n > 0);
+      });
+      var u = unidades();
+      barraPed.classList.toggle('ver', u > 0);
+      if (reservar) reservar.classList.toggle('oculto', u > 0);
+      document.getElementById('bpCant').textContent = u;
+      document.getElementById('bpTotal').textContent = precio(total());
+      document.getElementById('totalPedido').textContent = precio(total());
+      document.getElementById('lineas').innerHTML = lineas.length ? lineas.map(function (l, i) {
+        var it = ITEMS[l.k];
+        return '<div class="linea"><div><div class="l-nom">' + esc(it.nombre) + '</div>' +
+               (l.op ? '<div class="l-op">' + esc(l.op) + '</div>' : '') +
+               '<div class="l-pre">' + precio(it.precio * l.n) + '</div></div>' +
+               '<div class="ctrl con"><button type="button" data-linea="' + i + '" data-d="-1">−</button><b>' + l.n + '</b>' +
+               '<button type="button" data-linea="' + i + '" data-d="1">+</button></div></div>';
+      }).join('') : '<p class="nota">Aún no agregas platos.</p>';
+      if (!lineas.length && hojaPed.classList.contains('ver')) cerrar();
+    }
+
+    document.addEventListener('click', function (e) {
+      var b = e.target.closest('.ctrl button[data-acc]');
+      if (!b) return;
+      var k = b.parentNode.dataset.k, it = ITEMS[k];
+      if (b.dataset.acc === 'menos') {
+        var ult = lineas.filter(function (x) { return x.k === k; }).pop();
+        if (ult) sumar(k, ult.op, -1);
+        return;
+      }
+      if (it.opciones && it.opciones.length) {
+        document.getElementById('opTitulo').textContent = it.nombre;
+        document.getElementById('opBotones').innerHTML = it.opciones.map(function (o) {
+          return '<button type="button" data-op="' + esc(o) + '">' + esc(o) + '</button>';
+        }).join('');
+        hojaOp.dataset.k = k;
+        abrir(hojaOp);
+      } else sumar(k, '', 1);
+    });
+    document.getElementById('opBotones').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-op]');
+      if (!b) return;
+      sumar(hojaOp.dataset.k, b.dataset.op, 1);
+      cerrar();
+    });
+    document.getElementById('lineas').addEventListener('click', function (e) {
+      var b = e.target.closest('button[data-linea]');
+      if (!b) return;
+      var l = lineas[+b.dataset.linea];
+      sumar(l.k, l.op, +b.dataset.d);
+    });
+    barraPed.addEventListener('click', function () { abrir(hojaPed); });
+    document.getElementById('vaciar').addEventListener('click', function () { lineas = []; guardar(); pintar(); cerrar(); });
+
+    document.getElementById('enviar').addEventListener('click', function () {
+      var nom = document.getElementById('pNombre');
+      if (!nom.value.trim()) { nom.focus(); nom.classList.add('error'); return; }
+      nom.classList.remove('error');
+      var modo = (document.querySelector('input[name="modo"]:checked') || {}).value || '';
+      var nota = document.getElementById('pNota').value.trim();
+      var txt = '*Pedido — ' + (N.nombre || '') + (N.subtitulo ? ' ' + N.subtitulo : '') + '*\n\n' +
+        'Nombre: ' + nom.value.trim() + '\n' + (modo ? 'Entrega: ' + modo + '\n' : '') + '\n' +
+        lineas.map(function (l) {
+          var it = ITEMS[l.k];
+          return '• ' + l.n + ' x ' + it.nombre + (l.op ? ' (' + l.op + ')' : '') + ' — ' + precio(it.precio * l.n);
+        }).join('\n') +
+        '\n\n*Total: ' + precio(total()) + '*' + (nota ? '\n\nNota: ' + nota : '');
+      window.open('https://wa.me/' + (PED.whatsapp || K.whatsapp) + '?text=' + encodeURIComponent(txt), '_blank');
+    });
+    pintar();
+  })();
 })();

@@ -38,6 +38,14 @@ window.CARTA = {
     tiktok: ""
   },
 
+  // Pedidos por WhatsApp desde la carta
+  pedidos: {
+    activo: true,
+    whatsapp: "51919474879",   // número donde llegan los pedidos
+    modos: ["Recojo en el local", "Envío mi motorizado a recogerlo"],
+    aviso: "El delivery lo coordinas tú con tu motorizado. Nosotros lo dejamos empacado y listo."
+  },
+
   // PENDIENTE: horario real. Ejemplo de formato:
   // horario: { lun: ["10:00","17:00"], mar: ["10:00","17:00"], mie: null, ... }
   // (null = cerrado ese día). Mientras sea null, no se muestra "Abierto ahora".
