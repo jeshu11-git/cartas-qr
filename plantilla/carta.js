@@ -102,6 +102,7 @@
   // Barra fija: buscador + chips
   var hayDestacados = cats.some(function (c) { return (c.platos || []).some(function (p) { return p.destacado; }); });
   h += '<div class="barra">';
+  if (PED) h += '<button type="button" class="modo-tira" id="modoTira"></button>';
   h += '<label class="buscador"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>' +
        '<input id="buscar" type="search" placeholder="Buscar un plato o bebida…" autocomplete="off">' +
        '<button class="limpiar" type="button" aria-label="Borrar">✕</button></label>';
@@ -210,6 +211,19 @@
          '<button class="vaciar" type="button" id="vaciar">Vaciar pedido</button></div>';
   }
 
+  if (PED) {
+    h += '<div class="elegir" id="elegir" role="dialog" aria-modal="true"><div class="elegir-caja">' +
+         '<div class="logo elegir-logo">' + foto(N.logo, 'Logo ' + N.nombre, 'Logo') + '</div>' +
+         '<h2 class="serif">' + esc(N.nombre) + '</h2>' + (N.subtitulo ? '<p class="sub serif">' + esc(N.subtitulo) + '</p>' : '') +
+         '<p class="elegir-preg">¿Qué deseas hacer?</p>' +
+         '<button type="button" class="opcion-modo" data-modo="mesa">' +
+           '<span class="om-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 3v8a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3M6 13v8M18 3c-2 1.5-3 4-3 7h3v11"/></svg></span>' +
+           '<span><b>' + esc(PED.textoMesa || 'Ver la carta') + '</b><small>' + esc(PED.subMesa || 'Estoy en el local') + '</small></span></button>' +
+         '<button type="button" class="opcion-modo pedir" data-modo="pedido">' +
+           '<span class="om-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12h-11z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>' +
+           '<span><b>' + esc(PED.textoPedido || 'Pedir para llevar') + '</b><small>' + esc(PED.subPedido || 'Arma tu pedido y envíalo por WhatsApp') + '</small></span></button>' +
+         '</div></div>';
+  }
   document.getElementById('app').innerHTML = h;
 
   // ---------- interacciones ----------
@@ -258,6 +272,35 @@
   var arriba = document.querySelector('.arriba');
   window.addEventListener('scroll', function () { arriba.classList.toggle('ver', window.scrollY > 700); }, { passive: true });
   arriba.addEventListener('click', function () { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+  // 3b) Modo: en el local (solo carta) o pedido para llevar
+  var MODO = 'mesa';
+  if (PED) (function () {
+    var tira = document.getElementById('modoTira');
+    var elegir = document.getElementById('elegir');
+    function setModo(m, guardarlo) {
+      MODO = m;
+      document.body.classList.toggle('modo-mesa', m === 'mesa');
+      document.body.classList.toggle('modo-pedido', m === 'pedido');
+      tira.innerHTML = m === 'mesa'
+        ? '<span>Estás viendo la carta</span><b>¿Para llevar? Pide aquí →</b>'
+        : '<span>Pedido para llevar</span><b>Solo ver la carta →</b>';
+      elegir.classList.remove('ver');
+      document.body.classList.remove('sin-scroll');
+      if (guardarlo) { try { sessionStorage.setItem('modo-' + location.pathname, m); } catch (e) {} }
+    }
+    elegir.addEventListener('click', function (e) {
+      var b = e.target.closest('[data-modo]');
+      if (b) { setModo(b.dataset.modo, true); window.scrollTo({ top: 0 }); }
+    });
+    tira.addEventListener('click', function () { setModo(MODO === 'mesa' ? 'pedido' : 'mesa', true); });
+    var param = new URLSearchParams(location.search).get('modo');
+    var previo = null;
+    try { previo = sessionStorage.getItem('modo-' + location.pathname); } catch (e) {}
+    if (param === 'mesa' || param === 'pedido') setModo(param, true);
+    else if (previo) setModo(previo, false);
+    else { setModo('mesa', false); elegir.classList.add('ver'); document.body.classList.add('sin-scroll'); }
+  })();
 
   // 4) Pedido por WhatsApp
   if (PED) (function () {

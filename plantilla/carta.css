@@ -404,3 +404,53 @@ body.sin-scroll { overflow: hidden; }
   background: #25A244; color: #fff; font: inherit; font-weight: 700; font-size: 1.02rem; padding: 15px;
 }
 .vaciar { width: 100%; margin-top: 8px; border: 0; background: transparent; color: var(--suave); font: inherit; font-size: .85rem; padding: 8px; cursor: pointer; }
+
+/* =========================================================
+   ELEGIR MODO: en el local / para llevar
+   ========================================================= */
+body.modo-mesa .ctrl,
+body.modo-mesa .barra-pedido,
+body.modo-mesa .flotante, body.modo-pedido .flotante { display: none !important; }
+
+.modo-tira {
+  display: flex; justify-content: space-between; align-items: center; gap: 10px;
+  width: calc(100% - 32px); margin: 0 16px 10px;
+  border: 0; border-radius: 12px; cursor: pointer;
+  background: color-mix(in srgb, var(--secundario) 12%, #fff);
+  color: var(--principal); font: inherit; font-size: .82rem;
+  padding: 9px 12px; text-align: left;
+}
+.modo-tira b { color: var(--accion); white-space: nowrap; }
+body.modo-pedido .modo-tira { background: color-mix(in srgb, var(--accion) 12%, #fff); }
+body.modo-pedido .modo-tira b { color: var(--principal); }
+
+.elegir {
+  position: fixed; inset: 0; z-index: 60;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+  background: linear-gradient(160deg, var(--principal), var(--principal-osc));
+}
+.elegir.ver { display: flex; }
+.elegir-caja { width: 100%; max-width: 420px; text-align: center; color: #fff; }
+.elegir-logo { margin: 0 auto 14px; }
+.elegir h2 { color: #fff; font-size: 2rem; line-height: 1.1; }
+.elegir h2::after { display: none; }
+.elegir .sub { color: var(--promo); font-size: 1.2rem; }
+.elegir-preg { margin: 26px 0 14px; font-size: .95rem; opacity: .9; }
+.opcion-modo {
+  width: 100%; display: flex; align-items: center; gap: 14px;
+  background: #fff; color: var(--texto);
+  border: 0; border-radius: 18px; padding: 18px;
+  margin-bottom: 12px; cursor: pointer; text-align: left; font: inherit;
+  box-shadow: 0 8px 24px rgba(0,0,0,.2);
+}
+.opcion-modo b { display: block; font-size: 1.08rem; color: var(--principal); }
+.opcion-modo small { display: block; font-size: .84rem; color: var(--suave); margin-top: 2px; }
+.om-ico {
+  flex: 0 0 48px; width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--secundario) 15%, #fff); color: var(--principal);
+}
+.om-ico svg { width: 26px; height: 26px; }
+.opcion-modo.pedir .om-ico { background: var(--accion); color: #fff; }
+.opcion-modo.pedir b { color: var(--accion); }
