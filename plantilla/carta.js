@@ -1,5 +1,5 @@
 /* =========================================================
-   PLANTILLA DE CARTA DIGITAL — Sistemas Pimpo
+   PLANTILLA DE CARTA DIGITAL — Sistemas ZR
    Lee los datos de window.CARTA (archivo datos.js de cada
    cliente) y arma toda la carta. No hace falta tocar este
    archivo para un cliente nuevo.
@@ -180,7 +180,7 @@
     });
     h += '</div>';
   }
-  h += '<p class="creditos">Carta digital por Sistemas Pimpo</p></footer>';
+  h += '<p class="creditos">Carta digital por ' + esc(C.marca || 'Sistemas ZR') + '</p></footer>';
 
   // Botones flotantes
   if (K.whatsapp) {
