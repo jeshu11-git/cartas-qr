@@ -9,6 +9,18 @@
   if (!C) { document.body.innerHTML = '<p style="padding:20px">Falta el archivo datos.js</p>'; return; }
 
   var MONEDA = C.moneda || 'S/';
+
+  // ===== TU MARCA (igual para todos los clientes) =====
+  var ZR = {
+    nombre: C.marca || 'Sistemas ZR',
+    whatsapp: ''   // <-- PON AQUÍ TU NÚMERO con 51 delante, ej: '51987654321'
+  };
+  function linkZR() {
+    if (!ZR.whatsapp) return '';
+    var negocio = ((C.negocio || {}).nombre || '') + ((C.negocio || {}).subtitulo ? ' ' + C.negocio.subtitulo : '');
+    return 'https://wa.me/' + ZR.whatsapp + '?text=' +
+      encodeURIComponent('Hola, vi la carta digital de ' + negocio + ' y quiero una para mi negocio');
+  }
   var DIAS = ['dom', 'lun', 'mar', 'mie', 'jue', 'vie', 'sab'];
   var NOMBRE_DIA = { lun: 'Lunes', mar: 'Martes', mie: 'Miércoles', jue: 'Jueves', vie: 'Viernes', sab: 'Sábado', dom: 'Domingo' };
 
@@ -180,7 +192,11 @@
     });
     h += '</div>';
   }
-  h += '<p class="creditos">Carta digital por ' + esc(C.marca || 'Sistemas ZR') + '</p></footer>';
+  if (linkZR()) {
+    h += '<div class="zr-promo"><p><b>¿Tienes un negocio?</b><br>Ten tu propia carta digital con pedidos por WhatsApp, como esta.</p>' +
+         '<a href="' + esc(linkZR()) + '" target="_blank" rel="noopener">Quiero mi carta</a></div>';
+  }
+  h += '<p class="creditos">Carta digital por ' + esc(ZR.nombre) + '</p></footer>';
 
   // Botones flotantes
   if (K.whatsapp) {
@@ -212,16 +228,41 @@
   }
 
   if (PED) {
-    h += '<div class="elegir" id="elegir" role="dialog" aria-modal="true"><div class="elegir-caja">' +
-         '<div class="logo elegir-logo">' + foto(N.logo, 'Logo ' + N.nombre, 'Logo') + '</div>' +
-         '<h2 class="serif">' + esc(N.nombre) + '</h2>' + (N.subtitulo ? '<p class="sub serif">' + esc(N.subtitulo) + '</p>' : '') +
-         '<p class="elegir-preg">¿Qué deseas hacer?</p>' +
-         '<button type="button" class="opcion-modo" data-modo="mesa">' +
+    var hora = ahora.getHours();
+    var saludo = hora < 12 ? '¡Buenos días!' : hora < 19 ? '¡Buenas tardes!' : '¡Buenas noches!';
+    // Gancho: el plato del chef de hoy, o si no hay, el primer destacado
+    var gancho = null;
+    cats.forEach(function (c) { (c.platos || []).forEach(function (p) {
+      if (!gancho && p.dia && p.dia === hoyClave) gancho = { et: 'Hoy recomendamos', p: p };
+    }); });
+    if (!gancho) cats.forEach(function (c) { (c.platos || []).forEach(function (p) {
+      if (!gancho && p.destacado) gancho = { et: 'El favorito de la casa', p: p };
+    }); });
+
+    h += '<div class="elegir" id="elegir" role="dialog" aria-modal="true">';
+    if (N.portada) h += '<img class="elegir-fondo" src="' + esc(N.portada) + '" alt="" onerror="this.remove()">';
+    h += '<div class="elegir-velo"></div><div class="elegir-caja">' +
+         '<div class="logo elegir-logo anim d1">' + foto(N.logo, 'Logo ' + N.nombre, 'Logo') + '</div>' +
+         '<p class="saludo anim d1">' + saludo + ' Bienvenido a</p>' +
+         '<h2 class="serif anim d2">' + esc(N.nombre) + '</h2>' +
+         (N.subtitulo ? '<p class="sub serif anim d2">' + esc(N.subtitulo) + '</p>' : '') +
+         '<div class="anim d3">' + estadoHTML() + '</div>';
+    if (gancho) {
+      h += '<div class="gancho anim d3"><span class="g-et">' + esc(gancho.et) + '</span>' +
+           '<span class="g-fila"><b>' + esc(gancho.p.nombre) + '</b><span class="g-pre">' + precio(gancho.p.precio) + '</span></span></div>';
+    }
+    h += '<p class="elegir-preg anim d4">¿Cómo lo quieres disfrutar?</p>' +
+         '<button type="button" class="opcion-modo anim d4" data-modo="mesa">' +
            '<span class="om-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 3v8a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2V3M6 13v8M18 3c-2 1.5-3 4-3 7h3v11"/></svg></span>' +
-           '<span><b>' + esc(PED.textoMesa || 'Ver la carta') + '</b><small>' + esc(PED.subMesa || 'Estoy en el local') + '</small></span></button>' +
-         '<button type="button" class="opcion-modo pedir" data-modo="pedido">' +
+           '<span class="om-txt"><b>' + esc(PED.textoMesa || 'Estoy en el local') + '</b><small>' + esc(PED.subMesa || 'Ver la carta completa') + '</small></span>' +
+           '<span class="om-flecha">›</span></button>' +
+         '<button type="button" class="opcion-modo pedir anim d5" data-modo="pedido">' +
            '<span class="om-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12h-11z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>' +
-           '<span><b>' + esc(PED.textoPedido || 'Pedir para llevar') + '</b><small>' + esc(PED.subPedido || 'Arma tu pedido y envíalo por WhatsApp') + '</small></span></button>' +
+           '<span class="om-txt"><b>' + esc(PED.textoPedido || 'Pedir para llevar') + '</b><small>' + esc(PED.subPedido || 'Arma tu pedido y envíalo por WhatsApp') + '</small></span>' +
+           '<span class="om-flecha">›</span></button>' +
+         (linkZR()
+           ? '<a class="elegir-zr anim d6" href="' + esc(linkZR()) + '" target="_blank" rel="noopener">Carta digital por <b>' + esc(ZR.nombre) + '</b> · ¿Quieres una para tu negocio?</a>'
+           : '<p class="elegir-zr anim d6">Carta digital por <b>' + esc(ZR.nombre) + '</b></p>') +
          '</div></div>';
   }
   document.getElementById('app').innerHTML = h;
